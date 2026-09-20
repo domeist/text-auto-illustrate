@@ -168,7 +168,19 @@ corpus contains.
 ### Building the full corpus
 
 The corpus derives from Google's [WIT](https://github.com/google-research-datasets/wit)
-dataset. Download the training split, then:
+dataset (CC BY-SA 3.0). The full English corpus — all 5,411,977 images, 565 MB
+gzipped — is attached to the [latest release](../../releases/latest):
+
+```bash
+curl -L -o data/corpus/wit-corpus-en.tsv.gz \
+  https://github.com/domeist/text-auto-illustrate/releases/latest/download/wit-corpus-en.tsv.gz
+rm data/corpus/demo.tsv.gz          # or index both; the demo is a subset
+java -jar target/text-auto-illustrate.jar index --corpus data/corpus --index index
+```
+
+Indexing all 5.4 million takes a little over two minutes and produces a 1.7 GB
+index. To rebuild the corpus from WIT yourself instead, download the training
+split and run:
 
 ```bash
 python3 tools/format_wit.py --input <wit tsv files> --output data/corpus
@@ -233,7 +245,14 @@ The dissertation, status report and presentation are attached to the
 
 ## Licence
 
-[MIT](LICENSE).
+Code: [MIT](LICENSE).
+
+Data: [CC BY-SA 3.0](data/LICENSE.md). Everything under `data/` derives from
+Wikipedia — via the [WIT dataset][wit] for the corpus, and directly for the
+evaluation passages — and carries Wikipedia's share-alike licence rather than
+the code licence. Attribution details are in [data/LICENSE.md](data/LICENSE.md).
+
+[wit]: https://github.com/google-research-datasets/wit
 
 The 2022 version was built on [Luc4IR](https://github.com/gdebasis/luc4ir), a
 teaching framework by Debasis Ganguly, who supervised the project. The 2026
