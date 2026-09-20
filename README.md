@@ -71,6 +71,57 @@ pixel.
 No model, no training, nothing learned. BM25 is a fixed formula from 1994, and
 the relevance judgements exist only to mark the results afterwards.
 
+**Building the index** happens once. WIT is filtered to English and cut down to
+four columns, then indexed on two fields — the caption, and the title of the
+article the image came from.
+
+```mermaid
+flowchart LR
+    wit[("WIT<br>37M rows · 108 languages")]
+    fmt["format_wit.py"]
+    corpus[("Corpus<br>5.4M captioned images")]
+    indexer["CorpusIndexer"]
+    index[("Lucene index")]
+
+    wit -->|"English rows,<br>4 columns"| fmt --> corpus --> indexer
+    indexer -->|"caption +<br>article title"| index
+
+    classDef store fill:#dce6f2,stroke:#41618f,stroke-width:1px,color:#16202b
+    classDef code fill:#ffffff,stroke:#596470,stroke-width:1px,color:#16202b
+    class wit,corpus,index store
+    class fmt,indexer code
+```
+
+**Illustrating a passage** happens per query, and scoring is a separate step
+afterwards.
+
+```mermaid
+flowchart LR
+    passage["A passage<br>of prose"]
+    extractor["QueryExtractor"]
+    retriever["Bm25Retriever"]
+    results["Ranked images"]
+    index[("Lucene index")]
+    judged[("EvaluationSet")]
+    metrics["Metrics"]
+    report["p@5 · recall<br>MRR · MAP"]
+
+    passage --> extractor -->|"10 distinctive<br>terms"| retriever
+    index -->|"searched"| retriever
+    retriever -->|"top 100"| results --> metrics --> report
+    judged -->|"which images suit<br>which passage"| metrics
+
+    classDef store fill:#dce6f2,stroke:#41618f,stroke-width:1px,color:#16202b
+    classDef code fill:#ffffff,stroke:#596470,stroke-width:1px,color:#16202b
+    classDef judge fill:#f6e8d8,stroke:#a8763a,stroke-width:1px,color:#16202b
+    class index,judged store
+    class passage,extractor,retriever,results code
+    class metrics,report judge
+```
+
+Note where the judgements enter: at `Metrics`, once retrieval is already over.
+They never reach the retriever, which is why nothing here can learn from them.
+
 ## Commands
 
 | | |
