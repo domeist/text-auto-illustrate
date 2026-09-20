@@ -136,13 +136,14 @@ relevant per passage while only 100 are ever retrieved, capping recall at 0.047.
 The reported figure of 0.005 is about a tenth of what is attainable, not a
 catastrophe. `evaluate` prints the ceiling alongside the score for this reason.
 
-**Ties are common.** Captions are short, so many results share an identical
-BM25 score — 71% searching captions alone, 39% once titles are searched too.
-Ordering ties differently moved Precision@5 between 0.120 and 0.152 in the
-caption-only configuration, a range covering most of the variation the 2022
-parameter sweep attributed to `k1` and `b`. Results are sorted by score and then
-by document id so repeated runs agree, but small differences between
-configurations should not be read as meaningful.
+**Ties used to dominate, and no longer do.** Captions are short, so many results
+share an identical BM25 score: 71% searching captions alone, 39% once titles are
+searched too. That mattered, because tied results are ordered arbitrarily.
+Searching captions alone, reordering ties moved Precision@5 between 0.120 and
+0.152 — a range covering most of the variation the 2022 sweep attributed to `k1`
+and `b`, meaning that study largely measured noise. With titles searched, the
+same three orderings give identical scores at the default settings. Results are
+still sorted by score and then document id so runs agree exactly.
 
 ## Demo corpus vs. full corpus
 
@@ -190,9 +191,18 @@ python3 -m venv .venv
 Charts land in `results/plots/`. The virtual environment is not optional on
 recent Debian and Ubuntu, where a plain `pip install` is refused.
 
-The BM25 grid spans `k1` up to 2.0 deliberately. The original study stopped at
-1.0 and so never tested Lucene's default of 1.2, which turned out to match or
-beat everything it did test.
+The grid spans `k1` up to 2.0 deliberately. The 2022 study stopped at 1.0 and so
+never tested Lucene's own default of 1.2.
+
+On the full corpus with titles searched, the best cell is `k1=2.0, b=0.4` at
+Precision@5 0.192, against 0.176 for the shipped defaults. That gap survives
+tie-reordering, so it is not the artefact the 2022 sweep was measuring.
+
+**The defaults are kept anyway.** That cell is the best of 36, chosen on 25
+passages, and amounts to two additional relevant results in the whole
+evaluation. Picking the maximum of a grid on a test set that small is how you
+end up reporting a number that does not survive contact with new data. The
+sweep is worth running and worth reading; it is not worth tuning to.
 
 ## Built with
 
