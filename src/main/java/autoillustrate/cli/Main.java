@@ -119,7 +119,10 @@ public final class Main {
                     outDir.resolve("bm25-sweep.csv"));
             case "terms" -> ParameterSweep.sweepQueryLength(index, set,
                     outDir.resolve("query-length-sweep.csv"));
-            default -> throw new IllegalArgumentException("--what must be bm25 or terms");
+            case "titles" -> ParameterSweep.sweepTitleBoost(index, set,
+                    Options.intValue(options, "terms", Bm25Retriever.DEFAULT_QUERY_TERMS),
+                    outDir.resolve("title-boost-sweep.csv"));
+            default -> throw new IllegalArgumentException("--what must be bm25, terms or titles");
         }
     }
 
@@ -157,7 +160,7 @@ public final class Main {
                                --index  <dir>
 
                   sweep      Score across a grid of settings, writing CSV
-                               --what bm25|terms                      (default bm25)
+                               --what bm25|terms|titles               (default bm25)
                                --set strict|lenient|<path>
                                --out <dir>      output directory      (default results)
 

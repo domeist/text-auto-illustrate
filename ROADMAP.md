@@ -4,22 +4,16 @@ Things worth doing next, roughly in order of value.
 
 ## Evaluation data
 
-**Include the lenient judgements in the demo corpus.** The demo corpus is built
-from the strict set's judgements only, so scoring the lenient set against it is
-meaningless — most of what it judges relevant is absent. The lenient set names
-83,332 distinct images, which fits inside a 200,000-image demo corpus
-comfortably, so this is a matter of passing both sets to
-`tools/build_demo_corpus.py` and republishing. Would grow the archive.
-
-**Document how the lenient set was built.** `tools/` explains where the corpus
-comes from and how the demo subset is sampled, but nothing records how the
-lenient judgements were generated — they were produced by walking Wikipedia
-article links and collecting the images found. Without that, the broader of the
-two sets is unreproducible and hard to trust.
-
 **Publish the evaluation sets on Hugging Face.** They are the part of this
 project that exists nowhere else, and researchers look for datasets there rather
-than inside GitHub repositories.
+than inside GitHub repositories. Both sets and their provenance are now in
+shape for it.
+
+**Reduce how much the demo corpus flatters the lenient set.** The demo now
+covers both sets, but 29% of its images are judged relevant to some passage, so
+lenient scores against it run far above the full corpus (Precision@5 0.704
+versus 0.432). More distractors would narrow the gap at the cost of a larger
+archive.
 
 ## Retrieval
 

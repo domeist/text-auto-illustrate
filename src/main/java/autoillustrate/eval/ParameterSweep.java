@@ -23,6 +23,7 @@ public final class ParameterSweep {
     private static final float[] K1_VALUES = {0.2f, 0.6f, 1.0f, 1.2f, 1.6f, 2.0f};
     private static final float[] B_VALUES = {0.0f, 0.2f, 0.4f, 0.6f, 0.75f, 1.0f};
     private static final int[] TERM_COUNTS = {1, 3, 5, 10, 15, 20, 25};
+    private static final float[] TITLE_BOOSTS = {0f, 0.5f, 1f, 2f, 3f, 5f};
 
     private ParameterSweep() {
     }
@@ -58,6 +59,29 @@ public final class ParameterSweep {
                     report.meanReciprocalRank(), report.meanAveragePrecision()));
             System.out.printf("  terms=%d  p@5=%.4f  MRR=%.4f%n",
                     terms, report.precisionAt5(), report.meanReciprocalRank());
+        }
+        write(output, rows);
+    }
+
+    /**
+     * Sweeps the weight given to article-title matches, from 0 (captions only,
+     * as the 2022 version worked) upwards.
+     */
+    public static void sweepTitleBoost(Path indexDir, EvaluationSet set, int queryTerms,
+                                       Path output) throws Exception {
+        List<String> rows = new ArrayList<>();
+        rows.add("title_boost,p_at_5,recall,mrr,map");
+        for (float boost : TITLE_BOOSTS) {
+            try (Bm25Retriever retriever = Bm25Retriever.withTitleBoost(indexDir, queryTerms,
+                    Bm25Retriever.DEFAULT_K1, Bm25Retriever.DEFAULT_B, boost)) {
+                Evaluation.Report report = Evaluation.run(retriever, set);
+                rows.add("%.2f,%.6f,%.6f,%.6f,%.6f".formatted(boost,
+                        report.precisionAt5(), report.recallAtDepth(),
+                        report.meanReciprocalRank(), report.meanAveragePrecision()));
+                System.out.printf("  title boost=%.1f  p@5=%.4f  recall=%.4f  MRR=%.4f%n",
+                        boost, report.precisionAt5(), report.recallAtDepth(),
+                        report.meanReciprocalRank());
+            }
         }
         write(output, rows);
     }

@@ -86,6 +86,32 @@ def plot_query_length(path: Path, output_dir: Path) -> int:
     return 1
 
 
+def plot_title_boost(path: Path, output_dir: Path) -> int:
+    """How much weighting article-title matches is worth."""
+    rows = read_rows(path)
+    boosts = [float(row["title_boost"]) for row in rows]
+
+    figure, axes = plt.subplots(figsize=(7, 4.5))
+    for column, label in MEASURES.items():
+        axes.plot(boosts, [float(row[column]) for row in rows], marker="o", label=label)
+    axes.axvline(1.0, color="grey", linestyle=":", linewidth=1)
+    axes.annotate("shipped default", xy=(1.0, axes.get_ylim()[1]),
+                  xytext=(4, -12), textcoords="offset points",
+                  fontsize="small", color="grey")
+    axes.set_xlabel("Weight given to article-title matches (0 = captions only)")
+    axes.set_ylabel("Score")
+    axes.set_title("Searching the article title as well as the caption")
+    axes.set_xticks(boosts)
+    axes.legend(fontsize="small")
+    axes.grid(alpha=0.3)
+    figure.tight_layout()
+    destination = output_dir / "title-boost.png"
+    figure.savefig(destination, dpi=150)
+    plt.close(figure)
+    print(f"wrote {destination}")
+    return 1
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -105,6 +131,9 @@ def main() -> None:
     query_length = args.results / "query-length-sweep.csv"
     if query_length.exists():
         written += plot_query_length(query_length, output_dir)
+    title_boost = args.results / "title-boost-sweep.csv"
+    if title_boost.exists():
+        written += plot_title_boost(title_boost, output_dir)
 
     if written == 0:
         raise SystemExit(f"no sweep CSV files found in {args.results} — run the sweep command first")
