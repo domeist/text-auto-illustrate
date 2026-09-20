@@ -253,6 +253,10 @@ tools/       Corpus preparation and plotting
 `Retriever` is an interface, so an implementation backed by image embeddings
 could be dropped in and measured against the same evaluation sets.
 
+## What's next
+
+See the [roadmap](ROADMAP.md).
+
 ## Dissertation
 
 The dissertation, status report and presentation are attached to the
