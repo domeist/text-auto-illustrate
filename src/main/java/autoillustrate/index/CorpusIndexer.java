@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +36,16 @@ public final class CorpusIndexer {
     public static final String FIELD_PAGE_URL = "pageUrl";
     public static final String FIELD_IMAGE_URL = "imageUrl";
     public static final String FIELD_CAPTION = "caption";
+    /**
+     * The Wikipedia article title, recovered from the page URL.
+     *
+     * <p>Captions are often uninformative about their subject — "copied at 300
+     * pixels/inch from the original PDF" says nothing — while the article the
+     * image came from usually names it exactly. Indexing the title recovers
+     * that signal, and gives short captions something beyond a single matching
+     * word to be ranked on.
+     */
+    public static final String FIELD_TITLE = "title";
     /**
      * Sortable copy of the id, used only to break ties.
      *
@@ -130,6 +141,41 @@ public final class CorpusIndexer {
         doc.add(new StoredField(FIELD_PAGE_URL, pageUrl));
         doc.add(new StoredField(FIELD_IMAGE_URL, imageUrl));
         doc.add(new TextField(FIELD_CAPTION, caption, Field.Store.YES));
+        doc.add(new TextField(FIELD_TITLE, titleFrom(pageUrl), Field.Store.YES));
         return doc;
+    }
+
+    /**
+     * Recovers the article title from a Wikipedia URL:
+     * {@code .../wiki/Hill_City,_Kansas} becomes {@code Hill City, Kansas}.
+     *
+     * <p>Returns an empty string for anything that does not look like an
+     * article URL, so an unusual corpus simply gets no title signal rather
+     * than a misleading one.
+     */
+    static String titleFrom(String pageUrl) {
+        if (pageUrl == null || pageUrl.isBlank()) {
+            return "";
+        }
+        int marker = pageUrl.lastIndexOf("/wiki/");
+        int start = marker >= 0 ? marker + "/wiki/".length() : pageUrl.lastIndexOf('/') + 1;
+        if (start <= 0 || start >= pageUrl.length()) {
+            return "";
+        }
+        String slug = pageUrl.substring(start);
+        int fragment = slug.indexOf('#');
+        if (fragment >= 0) {
+            slug = slug.substring(0, fragment);
+        }
+        int query = slug.indexOf('?');
+        if (query >= 0) {
+            slug = slug.substring(0, query);
+        }
+        try {
+            slug = URLDecoder.decode(slug, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            // A stray '%' that is not a valid escape; the raw slug is still usable.
+        }
+        return slug.replace('_', ' ').strip();
     }
 }

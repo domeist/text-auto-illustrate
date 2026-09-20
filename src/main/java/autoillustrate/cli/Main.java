@@ -93,10 +93,13 @@ public final class Main {
         int terms = Options.intValue(options, "terms", Bm25Retriever.DEFAULT_QUERY_TERMS);
         float k1 = Options.floatValue(options, "k1", Bm25Retriever.DEFAULT_K1);
         float b = Options.floatValue(options, "b", Bm25Retriever.DEFAULT_B);
+        float titleBoost = Options.floatValue(options, "title-boost",
+                Bm25Retriever.DEFAULT_TITLE_BOOST);
         boolean verbose = options.containsKey("verbose");
 
         EvaluationSet set = EvaluationSet.load(setPath);
-        try (Bm25Retriever retriever = Bm25Retriever.withParameters(index, terms, k1, b)) {
+        try (Bm25Retriever retriever =
+                     Bm25Retriever.withTitleBoost(index, terms, k1, b, titleBoost)) {
             Evaluation.Report report =
                     Evaluation.run(retriever, set, Evaluation.DEFAULT_DEPTH, verbose);
             System.out.println();
@@ -148,6 +151,8 @@ public final class Main {
                                --set strict|lenient|<path>            (default strict)
                                --terms <n>      query terms           (default 10)
                                --k1 <f> --b <f> BM25 parameters       (default 1.2, 0.75)
+                               --title-boost <f> weight of article-title
+                                                matches                (default 1.0; 0 disables)
                                --verbose        show per-passage hits
                                --index  <dir>
 

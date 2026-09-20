@@ -8,6 +8,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -39,11 +40,18 @@ public final class Bm25Retriever implements Retriever {
     public static final float DEFAULT_B = 0.75f;
     /** Query terms extracted from the passage when no other count is given. */
     public static final int DEFAULT_QUERY_TERMS = 10;
+    /**
+     * Weight given to a query term matching the article title rather than the
+     * caption. Titles are short and name the subject directly, so a match there
+     * is strong evidence; the caption remains the primary field.
+     */
+    public static final float DEFAULT_TITLE_BOOST = 1.0f;
 
     private final DirectoryReader reader;
     private final IndexSearcher searcher;
     private final QueryExtractor extractor;
     private final int queryTerms;
+    private final float titleBoost;
 
     /**
      * Highest score first, ties broken by document id.
@@ -57,24 +65,39 @@ public final class Bm25Retriever implements Retriever {
             new SortField(CorpusIndexer.FIELD_ID_SORT, SortField.Type.STRING));
 
     public Bm25Retriever(Path indexDir) throws IOException {
-        this(indexDir, DEFAULT_QUERY_TERMS, DEFAULT_K1, DEFAULT_B);
+        this(indexDir, DEFAULT_QUERY_TERMS, DEFAULT_K1, DEFAULT_B, DEFAULT_TITLE_BOOST);
     }
 
     public Bm25Retriever(Path indexDir, int queryTerms, float k1, float b) throws IOException {
+        this(indexDir, queryTerms, k1, b, DEFAULT_TITLE_BOOST);
+    }
+
+    public Bm25Retriever(Path indexDir, int queryTerms, float k1, float b, float titleBoost)
+            throws IOException {
         if (queryTerms < 1) {
             throw new IllegalArgumentException("queryTerms must be at least 1, got " + queryTerms);
+        }
+        if (titleBoost < 0) {
+            throw new IllegalArgumentException("titleBoost must not be negative, got " + titleBoost);
         }
         this.reader = DirectoryReader.open(FSDirectory.open(indexDir));
         this.searcher = new IndexSearcher(reader);
         this.searcher.setSimilarity(new BM25Similarity(k1, b));
         this.extractor = new QueryExtractor(reader);
         this.queryTerms = queryTerms;
+        this.titleBoost = titleBoost;
     }
 
     /** Returns a retriever over the same index with different BM25 parameters. */
     public static Bm25Retriever withParameters(Path indexDir, int queryTerms, float k1, float b)
             throws IOException {
         return new Bm25Retriever(indexDir, queryTerms, k1, b);
+    }
+
+    /** As {@link #withParameters}, also setting the weight given to title matches. */
+    public static Bm25Retriever withTitleBoost(Path indexDir, int queryTerms, float k1, float b,
+                                               float titleBoost) throws IOException {
+        return new Bm25Retriever(indexDir, queryTerms, k1, b, titleBoost);
     }
 
     @Override
@@ -107,11 +130,16 @@ public final class Bm25Retriever implements Retriever {
      * string. The terms already came out of the analyzer, so re-parsing them
      * would risk a stray character being read as query syntax.
      */
-    private static Query toQuery(List<String> terms) {
+    private Query toQuery(List<String> terms) {
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
         for (String term : terms) {
             builder.add(new TermQuery(new Term(CorpusIndexer.FIELD_CAPTION, term)),
                     BooleanClause.Occur.SHOULD);
+            if (titleBoost > 0) {
+                Query title = new TermQuery(new Term(CorpusIndexer.FIELD_TITLE, term));
+                builder.add(titleBoost == 1.0f ? title : new BoostQuery(title, titleBoost),
+                        BooleanClause.Occur.SHOULD);
+            }
         }
         return builder.build();
     }

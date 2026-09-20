@@ -11,10 +11,14 @@ $ text-auto-illustrate search --text "In architecture, the frieze is the wide
 
 query terms: entablatur friez ba decor relief wide architectur section central
 
-1. The Circus, Bath, UK. Architectural detail of the frieze showing the
-   alternating triglyphs and decorative emblems. John Wood, architect.
-   https://upload.wikimedia.org/wikipedia/commons/4/43/Decorative_emblems_The_Circus_Bath.jpg
-   https://en.wikipedia.org/wiki/Circus_(Bath)
+1. Sankissa elephant frieze
+   https://upload.wikimedia.org/wikipedia/commons/1/14/Sankissa_elephant_frieze.jpg
+   https://en.wikipedia.org/wiki/Frieze
+
+2. Frieze from Delphi, lotus with multiple calyx. Treasury of the Siphnians,
+   525 BCE.
+   https://upload.wikimedia.org/wikipedia/commons/8/83/Frieze_from_Delphi_lotus_with_multiple_calyx.jpg
+   https://en.wikipedia.org/wiki/Frieze
 ```
 
 University of Glasgow final-year project, BSc Computer Science, 2022 — rebuilt in 2026.
@@ -53,6 +57,11 @@ top-scoring words become the query.
 caption. Searching those captions with BM25 matches text against text, and
 returns an image as a side effect. Nothing ever looks at the pixels.
 
+Two fields are searched: the caption, and the title of the article the image
+came from. Captions are often uninformative — *"scanned at 300 dpi from the
+original plate"* names no subject — while the article title usually names it
+exactly. Weight the title with `--title-boost`; zero searches captions alone.
+
 There is no machine learning here and nothing is trained. BM25 is a fixed
 ranking formula, and the relevance judgements are used only to score results
 after the fact.
@@ -86,19 +95,36 @@ java -jar target/text-auto-illustrate.jar evaluate --set strict --verbose
 ### Results on the full corpus
 
 Measured against all 5,411,977 images, BM25 with `k1=1.2`, `b=0.75`, 10 query
-terms, top 100 results.
+terms, title boost 1.0, top 100 results.
 
 | | strict | lenient |
 |---|---|---|
-| Precision@5 | 0.136 | 0.272 |
-| Recall@100 | 0.207 | 0.005 (ceiling 0.047) |
-| MRR | 0.218 | 0.445 |
-| MAP@100 | 0.091 | 0.036 |
-| nDCG@100 | — | 0.116 |
+| Precision@5 | 0.176 | 0.432 |
+| Recall@100 | 0.296 | 0.006 (ceiling 0.047) |
+| MRR | 0.248 | 0.673 |
+| MAP@100 | 0.137 | 0.063 |
+| nDCG@100 | — | 0.163 |
+| Passages scoring zero at rank 5 | 16 of 25 | 4 of 25 |
+
+### What searching the article title is worth
+
+The 2022 version searched captions only. Adding the title field, on the strict
+set over the full corpus:
+
+| | captions only | with titles |
+|---|---|---|
+| Precision@5 | 0.136 | **0.176** |
+| Recall@100 | 0.207 | **0.296** |
+| MAP@100 | 0.091 | **0.137** |
+| Results sharing a score | 71% | **39%** |
+
+The recall gain is the most trustworthy of these, since it depends on whether
+relevant images appear at all rather than exactly where. Halving the proportion
+of tied scores also makes the rank-sensitive measures steadier.
 
 ### Reading those numbers honestly
 
-**The scores understate the system.** 17 of the 25 strict passages score zero at
+**The scores understate the system.** 16 of the 25 strict passages score zero at
 rank 5, but inspecting them shows the retrieved images are often clearly
 appropriate — they simply are not in the hand-written answer key. A paragraph
 about fur-trade forts returns Hudson's Bay Company trading posts and scores
@@ -110,12 +136,13 @@ relevant per passage while only 100 are ever retrieved, capping recall at 0.047.
 The reported figure of 0.005 is about a tenth of what is attainable, not a
 catastrophe. `evaluate` prints the ceiling alongside the score for this reason.
 
-**Ties dominate.** Captions are short, so 51% of retrieved results share a BM25
-score with another result. Ordering ties differently moves Precision@5 between
-0.120 and 0.152 — a range that covers most of the variation the 2022 parameter
-sweep attributed to `k1` and `b`. Results are sorted by score and then by
-document id so that repeated runs agree, but the absolute values carry real
-uncertainty, and small differences between configurations are not meaningful.
+**Ties are common.** Captions are short, so many results share an identical
+BM25 score — 71% searching captions alone, 39% once titles are searched too.
+Ordering ties differently moved Precision@5 between 0.120 and 0.152 in the
+caption-only configuration, a range covering most of the variation the 2022
+parameter sweep attributed to `k1` and `b`. Results are sorted by score and then
+by document id so repeated runs agree, but small differences between
+configurations should not be read as meaningful.
 
 ## Demo corpus vs. full corpus
 
@@ -128,9 +155,10 @@ are all still present, but there are 27× fewer wrong answers to sift through.
 
 | | demo (200,722) | full (5,411,977) |
 |---|---|---|
-| Precision@5 | 0.320 | 0.136 |
-| MRR | 0.456 | 0.218 |
-| Index build | 3 seconds | 110 seconds |
+| Precision@5 | 0.424 | 0.176 |
+| Recall@100 | 0.488 | 0.296 |
+| MRR | 0.636 | 0.248 |
+| Index build | 3 seconds | 137 seconds |
 
 It demonstrates the pipeline; it does not reproduce the published results. The
 lenient set needs the full corpus, since it judges more images than the demo

@@ -40,7 +40,10 @@ class RetrievalRoundTripTest {
             "4\thttps://example.org/kingfisher\thttps://example.org/kingfisher.jpg\t"
                     + "A kingfisher perched above the riverbank",
             "5\thttps://example.org/cornice\thttps://example.org/cornice.jpg\t"
-                    + "Stone cornice and architrave above a column") + "\n";
+                    + "Stone cornice and architrave above a column",
+            // Caption says nothing about the subject; only the article title does.
+            "6\thttps://en.wikipedia.org/wiki/Pediment\thttps://example.org/p.jpg\t"
+                    + "Scanned at 300 dpi from the original plate") + "\n";
 
     @BeforeAll
     static void buildIndex() throws IOException {
@@ -48,7 +51,7 @@ class RetrievalRoundTripTest {
         Files.writeString(corpusDir.resolve("corpus.tsv"), CORPUS);
         indexDir = workspace.resolve("index");
         long indexed = new CorpusIndexer(indexDir).indexDirectory(corpusDir);
-        assertEquals(5, indexed);
+        assertEquals(6, indexed);
     }
 
     @Test
@@ -79,6 +82,28 @@ class RetrievalRoundTripTest {
     }
 
     @Test
+    @DisplayName("an image is findable by its article title when the caption is uninformative")
+    void titleMakesUninformativeCaptionsFindable() throws Exception {
+        try (Bm25Retriever retriever = new Bm25Retriever(indexDir)) {
+            List<String> ids = retriever.retrieve("A classical pediment.", 5)
+                    .stream().map(Result::id).toList();
+            assertTrue(ids.contains("6"),
+                    "expected the pediment image, whose caption never says 'pediment': " + ids);
+        }
+    }
+
+    @Test
+    @DisplayName("with the title boost off, that image is unreachable")
+    void withoutTitleBoostTheSameImageIsMissed() throws Exception {
+        try (Bm25Retriever retriever = Bm25Retriever.withTitleBoost(
+                indexDir, 10, Bm25Retriever.DEFAULT_K1, Bm25Retriever.DEFAULT_B, 0f)) {
+            List<String> ids = retriever.retrieve("A classical pediment.", 5)
+                    .stream().map(Result::id).toList();
+            assertFalse(ids.contains("6"), "caption-only search should not find it: " + ids);
+        }
+    }
+
+    @Test
     void limitCapsTheNumberOfResults() throws Exception {
         try (Bm25Retriever retriever = new Bm25Retriever(indexDir)) {
             assertEquals(2, retriever.retrieve("frieze cornice column river trout", 2).size());
@@ -99,7 +124,7 @@ class RetrievalRoundTripTest {
         try (var out = new GZIPOutputStream(Files.newOutputStream(corpusDir.resolve("c.tsv.gz")))) {
             out.write(CORPUS.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
-        assertEquals(5, new CorpusIndexer(dir.resolve("index")).indexDirectory(corpusDir));
+        assertEquals(6, new CorpusIndexer(dir.resolve("index")).indexDirectory(corpusDir));
     }
 
     @Test
