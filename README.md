@@ -83,10 +83,19 @@ Measuring this needed ground truth that did not exist, so the project includes
 two hand-built evaluation sets, in `data/evaluation/`. Both are reusable by
 anyone working on similar problems.
 
-| Set | Passages | Judgements | Notes |
-|---|---|---|---|
-| `strict.tsv` | 25 | 722 images, binary | Annotated by hand |
-| `lenient.tsv` | 25 | 285,611 images, 3 grades | Generated, much broader |
+| Set | Passages | Judgements | Per passage | Notes |
+|---|---|---|---|---|
+| `strict.tsv` | 25 | 722 images, relevant or not | 28 on average | Annotated by hand |
+| `lenient.tsv` | 25 | 83,332 images, three grades | 4,421 on average | Generated, much broader |
+
+Each row is a passage and the images judged to suit it:
+
+```
+0    In architecture, the frieze is the wide central...    0,4006352,2824798,...
+```
+
+The ids refer to rows of the corpus, so a set only means anything alongside the
+corpus it was built against.
 
 ```bash
 java -jar target/text-auto-illustrate.jar evaluate --set strict --verbose
@@ -131,10 +140,10 @@ about fur-trade forts returns Hudson's Bay Company trading posts and scores
 nothing. The strict ground truth is incomplete, and the lenient set exists to
 compensate.
 
-**Lenient recall cannot approach 1.** That set judges roughly 11,400 images
+**Lenient recall cannot approach 1.** That set judges about 4,400 images
 relevant per passage while only 100 are ever retrieved, capping recall at 0.047.
-The reported figure of 0.005 is about a tenth of what is attainable, not a
-catastrophe. `evaluate` prints the ceiling alongside the score for this reason.
+The reported 0.006 is roughly an eighth of what is attainable, not a
+catastrophe. `evaluate` prints the ceiling beside the score for this reason.
 
 **Ties used to dominate, and no longer do.** Captions are short, so many results
 share an identical BM25 score: 71% searching captions alone, 39% once titles are
@@ -161,9 +170,12 @@ are all still present, but there are 27× fewer wrong answers to sift through.
 | MRR | 0.636 | 0.248 |
 | Index build | 3 seconds | 137 seconds |
 
-It demonstrates the pipeline; it does not reproduce the published results. The
-lenient set needs the full corpus, since it judges more images than the demo
-corpus contains.
+It demonstrates the pipeline; it does not reproduce the published results.
+
+The demo corpus is built from the strict set's judgements only, so scoring the
+lenient set against it is meaningless — most of what that set judges relevant is
+simply absent. Use the full corpus for lenient, or rebuild the demo corpus
+passing both sets to `tools/build_demo_corpus.py`.
 
 ### Building the full corpus
 
