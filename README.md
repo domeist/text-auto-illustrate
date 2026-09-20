@@ -178,9 +178,12 @@ rm data/corpus/demo.tsv.gz          # or index both; the demo is a subset
 java -jar target/text-auto-illustrate.jar index --corpus data/corpus --index index
 ```
 
-Indexing all 5.4 million takes a little over two minutes and produces a 1.7 GB
-index. To rebuild the corpus from WIT yourself instead, download the training
-split and run:
+Indexing all 5.4 million takes about 95 seconds and produces a 1.4 GB index.
+The figures in [Results on the full corpus](#results-on-the-full-corpus) were
+measured from exactly this archive.
+
+To rebuild the corpus from WIT yourself instead, download the training split
+and run:
 
 ```bash
 python3 tools/format_wit.py --input <wit tsv files> --output data/corpus
