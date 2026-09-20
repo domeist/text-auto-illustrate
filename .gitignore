@@ -1,0 +1,28 @@
+# Build output
+target/
+dependency-reduced-pom.xml
+
+# Generated search index (anchored: there is also a source package named index)
+/index/
+/*.index/
+
+# Evaluation output
+/results/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

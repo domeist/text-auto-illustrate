@@ -1,0 +1,29 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Build and test
+        run: mvn --batch-mode verify
+
+      - name: Index the demo corpus
+        run: java -jar target/text-auto-illustrate.jar index --corpus data/corpus --index index
+
+      - name: Evaluate against the strict set
+        run: java -jar target/text-auto-illustrate.jar evaluate --index index --set strict
