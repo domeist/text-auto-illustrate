@@ -287,9 +287,10 @@ python3 -m venv .venv
 .venv/bin/python tools/plot_results.py --results results
 ```
 
-Charts land in `results/plots/`; the ones in this README are in [`docs/`](docs).
-The virtual environment is not optional on recent Debian and Ubuntu, where a
-plain `pip install` is refused.
+Charts land in `results/plots/`. The ones in this README, plus recall, MRR, MAP
+and query-length plots not shown here, are committed in [`docs/`](docs). The
+virtual environment is not optional on recent Debian and Ubuntu, where a plain
+`pip install` is refused.
 
 <p align="center">
   <img src="docs/bm25-p_at_5.png" alt="Precision@5 across BM25 settings" width="680">
