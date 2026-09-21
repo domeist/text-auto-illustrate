@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text Auto Illustrate</title>
+<style>
+  :root {
+    --paper: #f4f6f8;
+    --surface: #ffffff;
+    --ink: #141c25;
+    --muted: #5c6875;
+    --faint: #8a95a1;
+    --border: #dbe1e8;
+    --accent: #2f5d9e;
+    --accent-soft: #e4ecf7;
+    --shadow: 0 1px 2px rgba(20, 28, 37, .06), 0 8px 24px rgba(20, 28, 37, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0e141a;
+      --surface: #151d25;
+      --ink: #e3eaf1;
+      --muted: #94a1af;
+      --faint: #6d7b89;
+      --border: #24303b;
+      --accent: #7dabe8;
+      --accent-soft: #17263a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 72px; }
+
+  header { padding: 40px 0 28px; }
+  h1 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    letter-spacing: -.02em;
+    margin: 0 0 6px;
+    font-weight: 700;
+  }
+  .sub { color: var(--muted); margin: 0; max-width: 60ch; }
+
+  .composer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 12px 13px;
+    font: inherit;
+    line-height: 1.55;
+  }
+  textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+  }
+
+  button {
+    font: inherit;
+    font-weight: 600;
+    border: 0;
+    border-radius: 7px;
+    padding: 10px 18px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  button:disabled { opacity: .55; cursor: default; }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+  .ex {
+    font-size: 12.5px;
+    font-weight: 500;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 20px;
+    padding: 5px 12px;
+    cursor: pointer;
+    border: 0;
+  }
+
+  .status { margin: 24px 0 0; color: var(--muted); font-size: 14px; min-height: 22px; }
+  .status .err { color: #b3261e; }
+  @media (prefers-color-scheme: dark) { .status .err { color: #f2b8b5; } }
+
+  .terms { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .term {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 3px;
+    padding: 3px 7px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+    gap: 16px;
+    margin-top: 22px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+  }
+  .thumb {
+    display: block;
+    aspect-ratio: 4 / 3;
+    background: var(--paper);
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb.dead { display: grid; place-items: center; color: var(--faint); font-size: 12px; }
+
+  .meta { padding: 11px 13px 13px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+  .cap {
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .foot {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 11.5px;
+  }
+  .foot a { color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .foot a:hover { text-decoration: underline; }
+  .score { color: var(--faint); font-variant-numeric: tabular-nums; flex: none; }
+
+  footer { margin-top: 44px; color: var(--faint); font-size: 12.5px; }
+  footer a { color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Text Auto Illustrate</h1>
+    <p class="sub">
+      Paste a paragraph. It picks out the words that characterise the passage and
+      searches a collection of captioned Wikipedia images for ones that suit it.
+    </p>
+  </header>
+
+  <form class="composer" id="form">
+    <label for="passage" class="visually-hidden" hidden>Passage to illustrate</label>
+    <textarea id="passage" name="passage" spellcheck="false"
+      placeholder="Paste a paragraph here…"></textarea>
+    <div class="row">
+      <button type="submit" id="go">Illustrate</button>
+      <div class="examples" id="examples"></div>
+    </div>
+  </form>
+
+  <p class="status" id="status"></p>
+  <div class="terms" id="terms"></div>
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    Searching captions and article titles with BM25 over a local Lucene index.
+    Images are served from Wikimedia Commons and carry their own licences.
+    <a href="https://github.com/domeist/text-auto-illustrate">Source</a>.
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var form = document.getElementById("form");
+  var passage = document.getElementById("passage");
+  var button = document.getElementById("go");
+  var status = document.getElementById("status");
+  var termsEl = document.getElementById("terms");
+  var grid = document.getElementById("grid");
+
+  var EXAMPLES = [
+    {
+      label: "Frieze",
+      text: "In architecture, the frieze is the wide central section part of an entablature and may be plain in the Ionic or Doric order, or decorated with bas-reliefs. Even when neither columns nor pilasters are expressed, it lies upon the architrave and is capped by the moldings of the cornice."
+    },
+    {
+      label: "Stairs",
+      text: "A stairway, staircase, flight of stairs, or simply stairs is a construction designed to bridge a large vertical distance between lower and higher levels by dividing it into smaller vertical distances called steps. Stairs may be straight, round, or consist of two or more straight pieces connected at angles."
+    },
+    {
+      label: "Chardonnay",
+      text: "Chardonnay is a green-skinned grape variety used in the production of white wine. The variety originated in the Burgundy wine region of eastern France, but is now grown wherever wine is produced, from England to New Zealand. The grape itself is very neutral, with many of the flavours commonly associated with it derived from terroir and oak."
+    }
+  ];
+
+  EXAMPLES.forEach(function (ex) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "ex";
+    b.textContent = ex.label;
+    b.addEventListener("click", function () {
+      passage.value = ex.text;
+      search();
+    });
+    document.getElementById("examples").appendChild(b);
+  });
+
+  /**
+   * Rewrites a Wikimedia file URL to a scaled thumbnail.
+   * Originals are frequently several megabytes; a grid of them is unusable.
+   * Returns null when the URL is not a shape we recognise, so the caller can
+   * fall back to the original rather than request something that will 404.
+   */
+  function thumbnail(url, width) {
+    var m = /^(https?:\/\/upload\.wikimedia\.org\/wikipedia\/[^/]+)\/([0-9a-f])\/([0-9a-f]{2})\/(.+)$/.exec(url);
+    if (!m) return null;
+    var name = m[4];
+    if (name.indexOf("/") !== -1) return null;
+    var scaled = width + "px-" + name;
+    // SVGs and PDFs are rasterised by the thumbnailer, gaining a .png suffix.
+    if (/\.svgz?$/i.test(name) || /\.pdf$/i.test(name)) scaled += ".png";
+    return m[1] + "/thumb/" + m[2] + "/" + m[3] + "/" + name + "/" + scaled;
+  }
+
+  function articleTitle(pageUrl) {
+    var i = pageUrl.lastIndexOf("/wiki/");
+    if (i === -1) return pageUrl;
+    try {
+      return decodeURIComponent(pageUrl.slice(i + 6)).replace(/_/g, " ");
+    } catch (e) {
+      return pageUrl.slice(i + 6).replace(/_/g, " ");
+    }
+  }
+
+  function card(r) {
+    var el = document.createElement("article");
+    el.className = "card";
+
+    var thumb = document.createElement("span");
+    thumb.className = "thumb";
+
+    var img = document.createElement("img");
+    img.loading = "lazy";
+    img.alt = r.caption || "Untitled image";
+    var small = thumbnail(r.imageUrl, 400);
+    img.src = small || r.imageUrl;
+    // Files get renamed and deleted on Commons; a dead link should read as a
+    // gap, not a broken-image icon. One retry at full size, then give up.
+    img.addEventListener("error", function onError() {
+      if (small && img.src !== r.imageUrl) {
+        img.src = r.imageUrl;
+        return;
+      }
+      img.removeEventListener("error", onError);
+      thumb.textContent = "image unavailable";
+      thumb.classList.add("dead");
+    });
+    thumb.appendChild(img);
+
+    var meta = document.createElement("div");
+    meta.className = "meta";
+
+    var cap = document.createElement("p");
+    cap.className = "cap";
+    cap.textContent = r.caption || "(no caption)";
+
+    var foot = document.createElement("div");
+    foot.className = "foot";
+
+    var link = document.createElement("a");
+    link.href = r.pageUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = articleTitle(r.pageUrl);
+
+    var score = document.createElement("span");
+    score.className = "score";
+    score.textContent = r.score;
+
+    foot.appendChild(link);
+    foot.appendChild(score);
+    meta.appendChild(cap);
+    meta.appendChild(foot);
+    el.appendChild(thumb);
+    el.appendChild(meta);
+    return el;
+  }
+
+  function setStatus(text, isError) {
+    status.innerHTML = "";
+    if (!text) return;
+    var span = document.createElement("span");
+    if (isError) span.className = "err";
+    span.textContent = text;
+    status.appendChild(span);
+  }
+
+  function search() {
+    var text = passage.value.trim();
+    if (!text) {
+      setStatus("Paste a passage first.", true);
+      passage.focus();
+      return;
+    }
+
+    button.disabled = true;
+    setStatus("Searching…");
+    termsEl.innerHTML = "";
+    grid.innerHTML = "";
+
+    fetch("/search?q=" + encodeURIComponent(text) + "&limit=24")
+      .then(function (res) { return res.json().then(function (b) { return { ok: res.ok, body: b }; }); })
+      .then(function (r) {
+        if (!r.ok || r.body.error) {
+          setStatus(r.body.error || "Something went wrong.", true);
+          return;
+        }
+        var results = r.body.results || [];
+        if (!results.length) {
+          setStatus("Nothing matched. The demo collection is a subset, so obscure "
+            + "subjects often have no suitable image in it.", false);
+          return;
+        }
+        setStatus(results.length + " images, ranked. Searching on:");
+        (r.body.queryTerms || []).forEach(function (t) {
+          var s = document.createElement("span");
+          s.className = "term";
+          s.textContent = t;
+          termsEl.appendChild(s);
+        });
+        var frag = document.createDocumentFragment();
+        results.forEach(function (res) { frag.appendChild(card(res)); });
+        grid.appendChild(frag);
+      })
+      .catch(function (e) {
+        setStatus("Could not reach the server: " + e.message, true);
+      })
+      .finally(function () {
+        button.disabled = false;
+      });
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    search();
+  });
+
+  // Ctrl/Cmd+Enter from the textarea submits, as in most composers.
+  passage.addEventListener("keydown", function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      search();
+    }
+  });
+})();
+</script>
+</body>
+</html>

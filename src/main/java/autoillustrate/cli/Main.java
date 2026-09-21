@@ -6,6 +6,7 @@ import autoillustrate.eval.ParameterSweep;
 import autoillustrate.index.CorpusIndexer;
 import autoillustrate.retrieve.Bm25Retriever;
 import autoillustrate.retrieve.Result;
+import autoillustrate.web.WebServer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +36,7 @@ public final class Main {
                 case "search" -> search(args);
                 case "evaluate" -> evaluate(args);
                 case "sweep" -> sweep(args);
+                case "serve" -> serve(args);
                 case "help", "--help", "-h" -> usage();
                 default -> {
                     System.err.println("unknown command: " + args[0]);
@@ -126,6 +128,26 @@ public final class Main {
         }
     }
 
+    private static void serve(String[] args) throws Exception {
+        Map<String, String> options = Options.parse(args);
+        Path index = options.containsKey("index") ? Path.of(options.get("index")) : DEFAULT_INDEX;
+        String host = options.getOrDefault("host", WebServer.DEFAULT_HOST);
+        int port = Options.intValue(options, "port", WebServer.DEFAULT_PORT);
+
+        WebServer server = new WebServer(index, host, port);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                server.close();
+            } catch (Exception e) {
+                // Shutting down anyway; nothing useful to do with this.
+            }
+        }));
+        server.start();
+        System.out.printf("Serving on http://%s:%d  —  press Ctrl+C to stop%n",
+                host, server.port());
+        Thread.currentThread().join();
+    }
+
     private static Path resolveSet(String name) {
         return switch (name) {
             case "strict" -> STRICT_SET;
@@ -159,6 +181,13 @@ public final class Main {
                                --verbose        show per-passage hits
                                --index  <dir>
 
+                  serve      Open a page for pasting a passage and viewing the images
+                               --port <n>       port                  (default 8080)
+                               --host <addr>    bind address          (default 127.0.0.1;
+                                                use 0.0.0.0 on WSL, or to
+                                                reach it from another machine)
+                               --index  <dir>
+
                   sweep      Score across a grid of settings, writing CSV
                                --what bm25|terms|titles               (default bm25)
                                --set strict|lenient|<path>
@@ -168,6 +197,7 @@ public final class Main {
                   text-auto-illustrate index --corpus data/corpus
                   text-auto-illustrate search --text "The frieze is the wide central section..."
                   text-auto-illustrate evaluate --set strict --verbose
+                  text-auto-illustrate serve
                 """);
     }
 }
