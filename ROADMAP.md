@@ -2,12 +2,14 @@
 
 Things worth doing next, roughly in order of value.
 
-## Evaluation data
+## Done
 
-**Publish the evaluation sets on Hugging Face.** They are the part of this
-project that exists nowhere else, and researchers look for datasets there rather
-than inside GitHub repositories. Both sets and their provenance are now in
-shape for it.
+- **Published the evaluation sets on Hugging Face** —
+  [`domeist/text-auto-illustrate`](https://huggingface.co/datasets/domeist/text-auto-illustrate),
+  as TREC-style qrels with metadata for every judged image, so the benchmark
+  stands on its own without the corpus.
+
+## Evaluation data
 
 **Reduce how much the demo corpus flatters the lenient set.** The demo now
 covers both sets, but 29% of its images are judged relevant to some passage, so

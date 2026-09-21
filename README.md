@@ -11,6 +11,8 @@
   <img alt="Lucene 9.12" src="https://img.shields.io/badge/Lucene-9.12-D22128">
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/code-MIT-blue"></a>
   <a href="data/LICENSE.md"><img alt="CC BY-SA 3.0" src="https://img.shields.io/badge/data-CC%20BY--SA%203.0-lightgrey"></a>
+  <a href="https://huggingface.co/datasets/domeist/text-auto-illustrate">
+    <img alt="Dataset on Hugging Face" src="https://img.shields.io/badge/%F0%9F%A4%97%20dataset-Hugging%20Face-FFD21E"></a>
 </p>
 
 ---
@@ -215,6 +217,22 @@ records the article behind each passage, and
 
 ```bash
 java -jar target/text-auto-illustrate.jar evaluate --set strict --verbose
+```
+
+### Using the sets without this code
+
+Both are published on Hugging Face as
+[`domeist/text-auto-illustrate`](https://huggingface.co/datasets/domeist/text-auto-illustrate),
+reshaped into TREC-style qrels — one row per passage–image pair — and bundled
+with caption and URL for all 83,357 judged images. That makes the benchmark
+self-contained: you can score a system against it without building the corpus.
+
+```python
+from datasets import load_dataset
+
+passages = load_dataset("domeist/text-auto-illustrate", "passages")["train"]
+qrels    = load_dataset("domeist/text-auto-illustrate", "qrels_strict")["train"]
+images   = load_dataset("domeist/text-auto-illustrate", "images")["train"]
 ```
 
 ## Demo corpus and full corpus
