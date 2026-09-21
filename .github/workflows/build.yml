@@ -9,21 +9,36 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 17 is the minimum the project supports; 25 is the current LTS.
+        # Both are exercised because Lucene behaves differently above Java 21,
+        # where it loads its memory-segment backend from a versioned directory
+        # that only works if the shaded jar is marked Multi-Release.
+        java: ['17', '25']
+
+    name: Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: ${{ matrix.java }}
           distribution: temurin
           cache: maven
 
       - name: Build and test
-        run: mvn --batch-mode verify
+        run: ./mvnw --batch-mode verify
 
       - name: Index the demo corpus
         run: java -jar target/text-auto-illustrate.jar index --corpus data/corpus --index index
 
       - name: Evaluate against the strict set
         run: java -jar target/text-auto-illustrate.jar evaluate --index index --set strict
+
+      - name: Search for a passage
+        run: |
+          java -jar target/text-auto-illustrate.jar search --index index --limit 3 \
+            --text "In architecture, the frieze is the wide central section of an entablature."

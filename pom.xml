@@ -63,6 +63,17 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>autoillustrate.cli.Main</mainClass>
+                  <manifestEntries>
+                    <!--
+                      Lucene ships as a multi-release JAR: on Java 21+ it loads
+                      MemorySegmentIndexInputProvider from META-INF/versions/21.
+                      Shading copies those classes in, but without this entry the
+                      JVM ignores the versioned directory and Lucene dies with
+                      "MemorySegmentIndexInputProvider is missing in Lucene JAR
+                      file" on every Java after 17.
+                    -->
+                    <Multi-Release>true</Multi-Release>
+                  </manifestEntries>
                 </transformer>
               </transformers>
             </configuration>

@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/domeist/text-auto-illustrate/actions/workflows/build.yml">
     <img alt="build" src="https://github.com/domeist/text-auto-illustrate/actions/workflows/build.yml/badge.svg"></a>
-  <img alt="Java 17+" src="https://img.shields.io/badge/Java-17%2B-007396">
+  <img alt="Java 17 to 25" src="https://img.shields.io/badge/Java-17%20%E2%80%93%2025-007396">
   <img alt="Lucene 9.12" src="https://img.shields.io/badge/Lucene-9.12-D22128">
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/code-MIT-blue"></a>
   <a href="data/LICENSE.md"><img alt="CC BY-SA 3.0" src="https://img.shields.io/badge/data-CC%20BY--SA%203.0-lightgrey"></a>
@@ -42,7 +42,8 @@ University of Glasgow final-year project, BSc Computer Science, 2022 — rebuilt
 
 ## Run it in a minute
 
-Needs a **JDK 17 or newer**. Nothing else — no Maven install, no dataset download.
+Needs a **JDK 17 or newer** — tested on 17 and 25. Nothing else: no Maven
+install, no dataset download.
 
 ```bash
 git clone https://github.com/domeist/text-auto-illustrate.git
