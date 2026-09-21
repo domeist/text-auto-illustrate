@@ -59,6 +59,11 @@ java -jar target/text-auto-illustrate.jar serve    # open http://localhost:8080
        alt="The web interface: a pasted paragraph about friezes, and a grid of matching Wikipedia images">
 </p>
 
+> **On WSL**, start it with `--host 0.0.0.0` — Windows cannot reach a service
+> bound to WSL's loopback address, so `localhost:8080` in a Windows browser
+> fails otherwise. The default binds to loopback because the server exposes a
+> local index.
+
 Or stay in the terminal:
 
 ```bash

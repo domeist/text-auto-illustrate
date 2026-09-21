@@ -183,7 +183,9 @@ public final class Main {
 
                   serve      Open a page for pasting a passage and viewing the images
                                --port <n>       port                  (default 8080)
-                               --host <addr>    bind address          (default 127.0.0.1)
+                               --host <addr>    bind address          (default 127.0.0.1;
+                                                use 0.0.0.0 on WSL, or to
+                                                reach it from another machine)
                                --index  <dir>
 
                   sweep      Score across a grid of settings, writing CSV
