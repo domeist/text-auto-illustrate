@@ -24,7 +24,10 @@ same evaluation sets. The comparison is the interesting part.
 
 ## Presentation
 
-**An interface.** The project is an evaluation harness; you cannot paste a
-paragraph and browse the images it suggests without reading a terminal. A small
-web front end showing the actual pictures would demonstrate the idea far better
-than a table of scores.
+**Let the interface search the full corpus comfortably.** `serve` opens the
+index once and shares it, which is fine for the demo corpus. Against the full
+5.4-million-image index the first query pays a warm-up cost; pre-warming on
+startup would hide it.
+
+**Deploy it somewhere.** The interface only runs locally. A hosted instance —
+even over the demo corpus — would let someone try the project without cloning it.

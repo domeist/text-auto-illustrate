@@ -49,8 +49,19 @@ install, no dataset download.
 git clone https://github.com/domeist/text-auto-illustrate.git
 cd text-auto-illustrate
 
-./mvnw package                                          # build and test
-java -jar target/text-auto-illustrate.jar index         # ~5 seconds
+./mvnw package                                     # build and test
+java -jar target/text-auto-illustrate.jar index    # ~5 seconds
+java -jar target/text-auto-illustrate.jar serve    # open http://localhost:8080
+```
+
+<p align="center">
+  <img src="docs/interface.png" width="720"
+       alt="The web interface: a pasted paragraph about friezes, and a grid of matching Wikipedia images">
+</p>
+
+Or stay in the terminal:
+
+```bash
 java -jar target/text-auto-illustrate.jar search --text "Your paragraph here."
 ```
 
@@ -131,6 +142,7 @@ They never reach the retriever, which is why nothing here can learn from them.
 |---|---|
 | `index` | Build the search index from a corpus of captioned images |
 | `search` | Find images for a passage — `--text` or `--file` |
+| `serve` | Opens a page for pasting a passage and looking at the images |
 | `evaluate` | Score the retriever against an evaluation set |
 | `sweep` | Score across a grid of settings, writing CSV to plot |
 
